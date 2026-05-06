@@ -59,8 +59,8 @@ Each row is a matched pair — identical instrumentation and mood, differing onl
 | 1 | a lively Irish jig with fiddle and bodhrán | a lively dance in 6/8 time with fiddle and bodhrán |
 | 2 | a spirited tarantella with guitar and tambourine | a spirited Italian folk dance in 6/8 time with guitar and tambourine |
 | 3 | a gentle barcarolle with piano in a flowing gondola style | a gentle piece in 6/8 time with piano in a flowing style |
-| 4 | a Celtic folk dance with uilleann pipes and frame drum | a Celtic-style dance in 6/8 time with pipes and frame drum |
-| 5 | a playful jig with flute and harp | a playful dance in 6/8 time with flute and harp |
+| 4 | a furlana with uilleann pipes and frame drum | a Celtic-style dance in 6/8 time with pipes and frame drum |
+| 5 | a playful saltarello with flute and harp | a playful dance in 6/8 time with flute and harp |
 
 ---
 

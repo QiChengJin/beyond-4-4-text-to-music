@@ -1,0 +1,51 @@
+time_sig,prompt_num,prompt_type,prompt
+2/4,1,cultural,an energetic march with brass and snare drums
+2/4,1,formal,an energetic piece in 2/4 time with brass and snare drums
+2/4,2,cultural,a cheerful polka with accordion and woodwinds
+2/4,2,formal,a cheerful dance in 2/4 time with accordion and woodwinds
+2/4,3,cultural,a festive can-can with strings and light percussion
+2/4,3,formal,a festive dance in 2/4 time with strings and light percussion
+2/4,4,cultural,"a military march with trumpets, tuba, and bass drum"
+2/4,4,formal,"a military-style piece in 2/4 time with trumpets, tuba, and bass drum"
+2/4,5,cultural,a bouncy polka with piano and clarinet
+2/4,5,formal,a bouncy dance in 2/4 time with piano and clarinet
+3/4,1,cultural,an elegant Viennese waltz with piano and strings
+3/4,1,formal,an elegant song in 3/4 time with piano and strings
+3/4,2,cultural,a melancholic mazurka with accordion and violin
+3/4,2,formal,a melancholic dance in 3/4 time with accordion and violin
+3/4,3,cultural,a stately minuet with harpsichord and flute
+3/4,3,formal,a stately piece in 3/4 time with harpsichord and flute
+3/4,4,cultural,a rustic country waltz with guitar and fiddle
+3/4,4,formal,a rustic song in 3/4 time with guitar and fiddle
+3/4,5,cultural,a dramatic waltz with full orchestra and sweeping strings
+3/4,5,formal,a dramatic piece in 3/4 time with full orchestra and sweeping strings
+4/4,1,cultural,a deep house track with four-on-the-floor kick and warm synth bass
+4/4,1,formal,an electronic dance track in 4/4 time with steady kick on every beat and warm synth bass
+4/4,2,cultural,a driving techno track with pounding kick drum and hypnotic synthesizers
+4/4,2,formal,a driving electronic track in 4/4 time with pounding kick drum and hypnotic synthesizers
+4/4,3,cultural,a jersey club track with rapid triplet hi-hats and bouncy bass
+4/4,3,formal,a club track in 4/4 time with rapid triplet hi-hats and bouncy bass
+4/4,4,cultural,"a glittery disco groove with lush strings, bass guitar, and steady kick drum"
+4/4,4,formal,"a dance track in 4/4 time with lush strings, bass guitar, and steady kick drum"
+4/4,5,cultural,"a roots reggae song with one-drop rhythm, guitar skank on the offbeats, and deep bass"
+4/4,5,formal,a song in 4/4 time with guitar emphasis on the offbeats and deep bass
+5/4,1,cultural,"a jazz piece with the same groove and rhythmic feel as Take Five, with piano and saxophone"
+5/4,1,formal,a jazz piece in 5/4 time with piano and saxophone
+5/4,2,cultural,"a progressive rock track with an asymmetric, five-beat groove, synth and electric guitar"
+5/4,2,formal,a progressive rock track in 5/4 time with synth and electric guitar
+5/4,3,cultural,a tense spy theme in the style and rhythmic feel as Mission Impossible with strings
+5/4,3,formal,a tense spy theme piece in 5/4 time with strings
+5/4,4,cultural,a Bulgarian folk-inspired dance with woodwinds and hand percussion
+5/4,4,formal,a folk-style dance in 5/4 time with woodwinds and hand percussion
+5/4,5,cultural,a moody jazz fusion piece with that quintuplet swing feel
+5/4,5,formal,a moody jazz fusion piece in 5/4 time
+6/8,1,cultural,a lively Irish jig with fiddle and bodhrán
+6/8,1,formal,a lively dance in 6/8 time with fiddle and bodhrán
+6/8,2,cultural,a spirited tarantella with guitar and tambourine
+6/8,2,formal,a spirited Italian folk dance in 6/8 time with guitar and tambourine
+6/8,3,cultural,a gentle barcarolle with piano in a flowing gondola style
+6/8,3,formal,a gentle piece in 6/8 time with piano in a flowing style
+6/8,4,cultural,a furlana with uilleann pipes and frame drum
+6/8,4,formal,a Celtic-style dance in 6/8 time with pipes and frame drum
+6/8,5,cultural,a playful saltarello with flute and harp
+6/8,5,formal,a playful dance in 6/8 time with flute and harp

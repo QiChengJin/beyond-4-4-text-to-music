@@ -1,0 +1,3 @@
+mode,confidence_threshold,model,n_samples,overall_accuracy,cultural_accuracy,formal_accuracy,cultural_minus_formal,collapse_to_44_rate_non44,human_label_coverage,low_conf_accuracy,high_conf_accuracy,acc_2_4,acc_3_4,acc_4_4,acc_5_4,acc_6_8
+madmom,0.7,Lyria,250,0.356,0.376,0.336,0.03999999999999998,0.68,1.0,0.28901734104046245,0.5064935064935064,0.0,0.5,1.0,0.02,0.26
+madmom,0.7,Suno,250,0.328,0.344,0.312,0.03199999999999997,0.775,1.0,0.25949367088607594,0.44565217391304346,0.0,0.5,1.0,0.0,0.14

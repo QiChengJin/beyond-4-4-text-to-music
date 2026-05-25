@@ -1,0 +1,9 @@
+mode,model,desired_time_sig,n,n_collapsed_to_44,collapse_rate,p_value_greater_0_5,bonferroni_alpha,significant_bonf
+hybrid,Lyria,2/4,50,0,0.0,1.0,0.0125,False
+hybrid,Lyria,3/4,50,22,0.44,0.8388818398212265,0.0125,False
+hybrid,Lyria,5/4,50,42,0.84,5.81777902297631e-07,0.0125,True
+hybrid,Lyria,6/8,50,37,0.74,0.0004681114554259125,0.0125,True
+hybrid,Suno,2/4,50,15,0.3,0.9986989142716389,0.0125,False
+hybrid,Suno,3/4,50,20,0.4,0.9405397737202819,0.0125,False
+hybrid,Suno,5/4,50,44,0.88,1.6218702825199216e-08,0.0125,True
+hybrid,Suno,6/8,50,45,0.9,2.104926011270436e-09,0.0125,True

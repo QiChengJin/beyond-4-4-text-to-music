@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy.stats import fisher_exact
 
 TIME_SIGS = ["2/4", "3/4", "4/4", "5/4", "6/8"]
 
@@ -99,62 +100,255 @@ def plot_confusion(data: pd.DataFrame, outdir: str, mode: str) -> str:
 
 
 def plot_rq1_prompt_type(data: pd.DataFrame, outdir: str, mode: str) -> str:
-    acc_by_type = (
+    prompt_order = ["cultural", "formal"]
+    models = data["model"].dropna().unique().tolist()
+
+    # Aggregate counts for point estimate + Fisher exact test
+    agg = (
         data.groupby(["model", "desired_time_sig", "prompt_type"], dropna=False)["correct_eval"]
-        .mean()
+        .agg(k="sum", n="count")
         .reset_index()
     )
+    agg["acc"] = np.where(agg["n"] > 0, agg["k"] / agg["n"], np.nan)
 
-    g = sns.catplot(
-        data=acc_by_type,
-        x="desired_time_sig",
-        y="correct_eval",
-        hue="prompt_type",
-        col="model",
-        kind="bar",
-        palette={"cultural": "#4C72B0", "formal": "#DD8452"},
-        height=5,
-        aspect=1.1,
-        order=TIME_SIGS,
+    # Ensure all combinations exist so zero-accuracy bars (e.g., 5/4) are rendered and labeled.
+    full_index = pd.MultiIndex.from_product(
+        [models, TIME_SIGS, prompt_order],
+        names=["model", "desired_time_sig", "prompt_type"],
     )
-    g.set_axis_labels("Time Signature", "Accuracy")
-    g.set_titles("{col_name}")
-    g.set(ylim=(0, 1))
-    plt.suptitle(f"RQ1: Accuracy by Prompt Type (mode={mode})", y=1.02, fontsize=14)
+    agg = (
+        agg.set_index(["model", "desired_time_sig", "prompt_type"])
+        .reindex(full_index)
+        .reset_index()
+    )
+    agg["k"] = agg["k"].fillna(0)
+    agg["n"] = agg["n"].fillna(0)
+    agg["acc"] = np.where(agg["n"] > 0, agg["k"] / agg["n"], 0.0)
+
+    fig, axes = plt.subplots(1, len(models), figsize=(6 * len(models), 5), sharey=True)
+    if len(models) == 1:
+        axes = [axes]
+
+    colors = {"cultural": "#1B4F72", "formal": "#85929E"}
+    bar_w = 0.38
+    x = np.arange(len(TIME_SIGS))
+
+    model_pvals = {}
+    for ax, model in zip(axes, models):
+        m = agg[agg["model"] == model].copy()
+        m = m.set_index(["desired_time_sig", "prompt_type"]).sort_index()
+
+        # Fisher exact test on overall cultural vs formal (collapsed across time signatures)
+        d_m = data[data["model"] == model]
+        c_ok = int((d_m[d_m["prompt_type"] == "cultural"]["correct_eval"] == 1).sum())
+        c_bad = int((d_m[d_m["prompt_type"] == "cultural"]["correct_eval"] == 0).sum())
+        f_ok = int((d_m[d_m["prompt_type"] == "formal"]["correct_eval"] == 1).sum())
+        f_bad = int((d_m[d_m["prompt_type"] == "formal"]["correct_eval"] == 0).sum())
+        _, p = fisher_exact([[c_ok, c_bad], [f_ok, f_bad]])
+        sig_text = "not significant" if p >= 0.05 else "significant"
+        model_pvals[model] = p
+        # Per-time-signature Fisher p-values
+        per_ts_pvals = {}
+        for ts in TIME_SIGS:
+            d_ts = d_m[d_m["desired_time_sig"] == ts]
+            c_ok_ts = int((d_ts[d_ts["prompt_type"] == "cultural"]["correct_eval"] == 1).sum())
+            c_bad_ts = int((d_ts[d_ts["prompt_type"] == "cultural"]["correct_eval"] == 0).sum())
+            f_ok_ts = int((d_ts[d_ts["prompt_type"] == "formal"]["correct_eval"] == 1).sum())
+            f_bad_ts = int((d_ts[d_ts["prompt_type"] == "formal"]["correct_eval"] == 0).sum())
+            _, p_ts = fisher_exact([[c_ok_ts, c_bad_ts], [f_ok_ts, f_bad_ts]])
+            per_ts_pvals[ts] = float(p_ts)
+        for j, pt in enumerate(prompt_order):
+            y = []
+            ns = []
+            for ts in TIME_SIGS:
+                row = m.loc[(ts, pt)]
+                yv = float(row["acc"])
+                y.append(yv)
+                ns.append(int(row["n"]))
+
+            xpos = x + (j - 0.5) * bar_w
+            ax.bar(xpos, y, width=bar_w, color=colors[pt], label=pt if model == models[0] else None)
+
+            # Annotate 0% (or n=0) to avoid "empty bar looks like missing data"
+            for xi, yv, n in zip(xpos, y, ns):
+                if n == 0:
+                    ax.text(xi, 0.015, "n=0", ha="center", va="bottom", fontsize=8, color="#666666")
+                elif yv == 0:
+                    ax.text(xi, 0.015, "0%", ha="center", va="bottom", fontsize=8, color="#333333")
+
+        # Annotate per-meter effect size as simple nearby percentage text.
+        # Skip tiny gaps to reduce visual noise.
+        min_gap_to_show = 0.03  # 3 percentage points
+        for i, ts in enumerate(TIME_SIGS):
+            yc = float(m.loc[(ts, "cultural"), "acc"])
+            yf = float(m.loc[(ts, "formal"), "acc"])
+            gap = abs(yc - yf)
+            if gap < min_gap_to_show:
+                continue
+            gap_pct = gap * 100.0
+            x_left = i - bar_w / 2
+            x_right = i + bar_w / 2
+            y_top = min(max(yc, yf) + 0.045, 1.08)
+            # |--| connector
+            ax.plot([x_left, x_right], [y_top, y_top], color="#333333", linewidth=1.1)
+            ax.plot([x_left, x_left], [y_top - 0.014, y_top], color="#333333", linewidth=1.1)
+            ax.plot([x_right, x_right], [y_top - 0.014, y_top], color="#333333", linewidth=1.1)
+            ax.text(
+                i,
+                min(y_top + 0.01, 1.10),
+                f"{gap_pct:.0f}%",
+                ha="center",
+                va="bottom",
+                fontsize=10,
+                color="#333333",
+                fontweight="bold",
+            )
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(TIME_SIGS)
+        ax.set_ylim(0, 1.12)
+        ax.set_xlabel("Time Signature")
+        ax.set_title(f"{model}\np={p:.3f}, {sig_text}")
+        for i, ts in enumerate(TIME_SIGS):
+            ax.text(
+                i,
+                1.04,
+                f"p={per_ts_pvals[ts]:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                color="#444444",
+            )
+
+    axes[0].set_ylabel("Accuracy")
+    handles = [plt.Rectangle((0, 0), 1, 1, color=colors[p]) for p in prompt_order]
+    fig.legend(handles, prompt_order, title="prompt_type", loc="center right")
+    plt.suptitle(
+        f"RQ1: Accuracy by Prompt Type (mode={mode})\n"
+        "No significant difference between cultural and formal prompts "
+        f"(overall Fisher: Lyria p={model_pvals.get('Lyria', float('nan')):.3f}, "
+        f"Suno p={model_pvals.get('Suno', float('nan')):.3f})",
+        y=1.03,
+        fontsize=14,
+    )
+    plt.tight_layout(rect=[0, 0, 0.9, 0.95])
     path = os.path.join(outdir, f"rq1_prompt_type_{mode}.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(g.fig)
+    plt.close(fig)
     return path
 
 
 def plot_collapse_to_44(data: pd.DataFrame, outdir: str, mode: str) -> str:
     non_44 = data[data["desired_time_sig"] != "4/4"].copy()
-    non_44["collapsed_to_44"] = non_44["truth_time_sig"] == "4/4"
+    order = [s for s in TIME_SIGS if s != "4/4"]
 
-    collapse_rate = (
-        non_44.groupby(["model", "desired_time_sig"], dropna=False)["collapsed_to_44"]
-        .mean()
-        .reset_index()
-    )
+    # Decompose outcomes for each desired meter:
+    # 1) collapsed_to_44
+    # 2) correct
+    # 3) other_non44_error = 1 - (1) - (2)
+    rows = []
+    for (model, desired), g in non_44.groupby(["model", "desired_time_sig"], dropna=False):
+        collapse_44 = float((g["truth_time_sig"] == "4/4").mean())
+        correct = float((g["truth_time_sig"] == g["desired_time_sig"]).mean())
+        other_non44_error = max(0.0, 1.0 - collapse_44 - correct)
+        rows.append(
+            {
+                "model": model,
+                "desired_time_sig": desired,
+                "collapse_44": collapse_44,
+                "correct": correct,
+                "other_non44_error": other_non44_error,
+            }
+        )
 
-    g = sns.catplot(
-        data=collapse_rate,
-        x="desired_time_sig",
-        y="collapsed_to_44",
-        col="model",
-        kind="bar",
-        color="#c44e52",
-        height=5,
-        aspect=1.1,
-        order=[s for s in TIME_SIGS if s != "4/4"],
-    )
-    g.set_axis_labels("Desired Time Signature", "Collapse-to-4/4 Rate")
-    g.set_titles("{col_name}")
-    g.set(ylim=(0, 1))
-    plt.suptitle(f"RQ2: Collapse to 4/4 Rate (mode={mode})", y=1.02, fontsize=14)
+    dec = pd.DataFrame(rows)
+    models = dec["model"].dropna().unique().tolist()
+
+    fig, axes = plt.subplots(1, len(models), figsize=(6 * len(models), 5), sharey=True)
+    if len(models) == 1:
+        axes = [axes]
+
+    for ax, model in zip(axes, models):
+        d = (
+            dec[dec["model"] == model]
+            .set_index("desired_time_sig")
+            .reindex(order)
+            .fillna(0.0)
+        )
+        x = np.arange(len(order))
+
+        # Bottom-up red: collapsed to 4/4
+        ax.bar(x, d["collapse_44"], color="#c44e52", label="Collapse to 4/4")
+        # Middle gray: wrong non-4/4 outcomes
+        ax.bar(
+            x,
+            d["other_non44_error"],
+            bottom=d["collapse_44"],
+            color="#bdbdbd",
+            label="Collapse to non-4/4 (wrong)",
+        )
+        # Top-down blue: correct desired meter
+        ax.bar(
+            x,
+            d["correct"],
+            bottom=1.0 - d["correct"],
+            color="#4C72B0",
+            label="Correct desired meter",
+        )
+
+        # Percentage labels for each chunk (skip very tiny chunks to reduce clutter)
+        min_label_h = 0.06
+        for i, ts in enumerate(order):
+            r = float(d.loc[ts, "collapse_44"])
+            g = float(d.loc[ts, "other_non44_error"])
+            b = float(d.loc[ts, "correct"])
+
+            if r >= min_label_h:
+                ax.text(i, r / 2, f"{r*100:.0f}%", ha="center", va="center", color="white", fontsize=9, fontweight="bold")
+            if g >= min_label_h:
+                ax.text(i, r + g / 2, f"{g*100:.0f}%", ha="center", va="center", color="black", fontsize=8)
+            if b >= min_label_h:
+                ax.text(i, 1.0 - b / 2, f"{b*100:.0f}%", ha="center", va="center", color="white", fontsize=9, fontweight="bold")
+
+            # Emphasize 5/4 and 6/8 collapse-to-4/4 in red segment
+            if ts in ("5/4", "6/8"):
+                y_in_red = max(0.04, r - 0.04)
+                ax.text(
+                    i,
+                    y_in_red,
+                    f"collapse {r*100:.0f}%",
+                    ha="center",
+                    va="top",
+                    color="white",
+                    fontsize=11,
+                    fontweight="bold",
+                    bbox=dict(
+                        boxstyle="round,pad=0.22",
+                        facecolor="#8b1a1a",
+                        edgecolor="white",
+                        linewidth=0.8,
+                        alpha=0.95,
+                    ),
+                )
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(order)
+        ax.set_ylim(0, 1)
+        ax.set_title(model)
+        ax.set_xlabel("Desired Time Signature")
+        for tick in ax.get_xticklabels():
+            if tick.get_text() in ("5/4", "6/8"):
+                tick.set_color("#8b1a1a")
+                tick.set_fontweight("bold")
+
+    axes[0].set_ylabel("Proportion")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.05))
+    plt.suptitle(f"RQ2: Outcome Decomposition (mode={mode})", y=1.10, fontsize=14)
+    plt.tight_layout()
     path = os.path.join(outdir, f"rq2_collapse_{mode}.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(g.fig)
+    plt.close(fig)
     return path
 
 
